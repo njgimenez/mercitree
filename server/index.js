@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const path = require('path');
 const fs = require('fs');
 
@@ -45,55 +45,62 @@ const upload = multer({
   }
 });
 
-// Inicializar base de datos
-const db = new sqlite3.Database('votos.db');
-
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS votos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
-    prediccion TEXT NOT NULL CHECK(prediccion IN ('varon', 'nina')),
-    pais TEXT,
-    comentario TEXT,
-    foto_url TEXT,
-    fecha_voto DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-  
-  // Agregar columnas de posición si no existen (para bases de datos existentes)
-  // Ya no se necesitan las columnas leaf_x, leaf_y, leaf_size, leaf_angle
-  // Ya no se necesitan las columnas leaf_x, leaf_y, leaf_size, leaf_angle
-  // Ya no se necesitan las columnas leaf_x, leaf_y, leaf_size, leaf_angle
-  // Ya no se necesitan las columnas leaf_x, leaf_y, leaf_size, leaf_angle
+// Inicializar base de datos PostgreSQL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/merci',
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
+
+// Crear tabla si no existe
+const createTable = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS votos (
+        id SERIAL PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        prediccion TEXT NOT NULL CHECK(prediccion IN ('varon', 'nina')),
+        pais TEXT,
+        comentario TEXT,
+        foto_url TEXT,
+        fecha_voto TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Tabla votos creada o verificada correctamente');
+  } catch (error) {
+    console.error('Error creando tabla:', error);
+  }
+};
+
+createTable();
 
 // Rutas API
-app.get('/api/votos', (req, res) => {
-  db.all('SELECT * FROM votos ORDER BY datetime(fecha_voto) DESC', (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json(rows);
-  });
+app.get('/api/votos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM votos ORDER BY fecha_voto DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error obteniendo votos:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.get('/api/estadisticas', (req, res) => {
-  db.get(`
-    SELECT 
-      COUNT(*) as total_votos,
-      SUM(CASE WHEN prediccion = 'varon' THEN 1 ELSE 0 END) as votos_varon,
-      SUM(CASE WHEN prediccion = 'nina' THEN 1 ELSE 0 END) as votos_nina
-    FROM votos
-  `, (err, row) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json(row);
-  });
+app.get('/api/estadisticas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        COUNT(*) as total_votos,
+        SUM(CASE WHEN prediccion = 'varon' THEN 1 ELSE 0 END) as votos_varon,
+        SUM(CASE WHEN prediccion = 'nina' THEN 1 ELSE 0 END) as votos_nina
+      FROM votos
+    `);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error obteniendo estadísticas:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.post('/api/votar', upload.single('foto'), (req, res) => {
+app.post('/api/votar', upload.single('foto'), async (req, res) => {
   const { nombre, prediccion, pais, comentario } = req.body;
   const foto_url = req.file ? `/uploads/${req.file.filename}` : null;
 
@@ -101,29 +108,21 @@ app.post('/api/votar', upload.single('foto'), (req, res) => {
     return res.status(400).json({ error: 'Datos inválidos' });
   }
 
-    const stmt = db.prepare(`
-    INSERT INTO votos (nombre, prediccion, pais, comentario, foto_url, fecha_voto)
-    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-  `);
-
-  stmt.run([nombre, prediccion, pais, comentario, foto_url], function(err) {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+  try {
+    const result = await pool.query(`
+      INSERT INTO votos (nombre, prediccion, pais, comentario, foto_url, fecha_voto)
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+      RETURNING *
+    `, [nombre, prediccion, pais, comentario, foto_url]);
     
     res.json({
-      id: this.lastID,
-      nombre,
-      prediccion,
-      pais,
-      comentario,
-      foto_url,
+      ...result.rows[0],
       mensaje: 'Voto registrado exitosamente'
     });
-  });
-
-  stmt.finalize();
+  } catch (error) {
+    console.error('Error insertando voto:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // En producción, solo servir la API

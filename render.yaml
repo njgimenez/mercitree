@@ -1,4 +1,11 @@
 services:
+  # Base de datos PostgreSQL
+  - type: pserv
+    name: merci-db
+    env: postgresql
+    plan: free
+    ipAllowList: []
+
   # Backend API
   - type: web
     name: backby-tree
@@ -13,6 +20,11 @@ services:
         value: 10000
       - key: FRONTEND_URL
         value: https://arbol-de-prediccion.onrender.com
+      - key: DATABASE_URL
+        fromService:
+          name: merci-db
+          type: pserv
+          property: connectionString
 
   # Frontend
   - type: web
