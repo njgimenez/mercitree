@@ -23,7 +23,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // Middleware
 app.use(cors({
-  origin: isProduction ? [process.env.FRONTEND_URL || 'https://merci-frontend.onrender.com'] : ['http://localhost:3000', 'http://192.168.18.49:3000'],
+  origin: isProduction ? [process.env.FRONTEND_URL || 'https://arbol-de-prediccion.onrender.com'] : ['http://localhost:3000', 'http://192.168.18.49:3000'],
   credentials: true
 }));
 app.use(express.json());
@@ -206,7 +206,7 @@ app.post('/api/votar', upload.single('foto'), (req, res) => {
 // En producción, solo servir la API
 if (process.env.NODE_ENV === 'production') {
   app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
       message: 'API de Árbol de Predicciones funcionando correctamente',
       endpoints: {
         votos: '/api/votos',
