@@ -126,12 +126,17 @@ app.post('/api/votar', upload.single('foto'), (req, res) => {
   stmt.finalize();
 });
 
-// Servir archivos estáticos del cliente en producción
+// En producción, solo servir la API
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  app.get('/', (req, res) => {
+    res.json({ 
+      message: 'API de Árbol de Predicciones funcionando correctamente',
+      endpoints: {
+        votos: '/api/votos',
+        estadisticas: '/api/estadisticas',
+        votar: '/api/votar'
+      }
+    });
   });
 }
 
