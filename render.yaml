@@ -14,7 +14,7 @@ services:
       - key: FRONTEND_URL
         value: https://arbol-de-prediccion.onrender.com
       - key: DATABASE_URL
-        value: postgresql://merci_user:tu_password@tu_host:5432/merci
+        value: postgresql://merci_user:Ad9VlhJJwXz8HkYq4BoLJPX7x2i3ARKy@dpg-d2lmr595pdvs73atvimg-a.oregon-postgres.render.com/merci_jz9e
 
   # Frontend
   - type: web
