@@ -60,8 +60,12 @@ const upload = multer({
 // Inicializar base de datos según el entorno
 if (process.env.NODE_ENV === 'production') {
   // PostgreSQL para producción
+  console.log('Inicializando PostgreSQL en producción...');
+  console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Configurada' : 'NO CONFIGURADA');
+  
   const createTable = async () => {
     try {
+      console.log('Creando tabla votos en PostgreSQL...');
       await pool.query(`
         CREATE TABLE IF NOT EXISTS votos (
           id SERIAL PRIMARY KEY,
@@ -73,14 +77,26 @@ if (process.env.NODE_ENV === 'production') {
           fecha_voto TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
-      console.log('Tabla votos PostgreSQL creada o verificada correctamente');
+      console.log('✅ Tabla votos PostgreSQL creada o verificada correctamente');
     } catch (error) {
-      console.error('Error creando tabla PostgreSQL:', error);
+      console.error('❌ Error creando tabla PostgreSQL:', error);
+      console.error('Detalles del error:', error.message);
     }
   };
-  createTable();
+  
+  // Verificar conexión antes de crear tabla
+  pool.query('SELECT NOW()')
+    .then(() => {
+      console.log('✅ Conexión a PostgreSQL exitosa');
+      createTable();
+    })
+    .catch(error => {
+      console.error('❌ Error conectando a PostgreSQL:', error);
+      console.error('DATABASE_URL:', process.env.DATABASE_URL);
+    });
 } else {
   // SQLite para desarrollo
+  console.log('Inicializando SQLite en desarrollo...');
   db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS votos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,16 +107,26 @@ if (process.env.NODE_ENV === 'production') {
       foto_url TEXT,
       fecha_voto DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
-    console.log('Tabla votos SQLite creada o verificada correctamente');
+    console.log('✅ Tabla votos SQLite creada o verificada correctamente');
   });
 }
 
 // Rutas API
 app.get('/api/votos', (req, res) => {
+  console.log('GET /api/votos - Entorno:', process.env.NODE_ENV);
+  
   if (process.env.NODE_ENV === 'production') {
     // PostgreSQL
+    if (!pool) {
+      console.error('Pool de PostgreSQL no está inicializado');
+      return res.status(500).json({ error: 'Base de datos no disponible' });
+    }
+    
     pool.query('SELECT * FROM votos ORDER BY fecha_voto DESC')
-      .then(result => res.json(result.rows))
+      .then(result => {
+        console.log('Votos obtenidos:', result.rows.length);
+        res.json(result.rows);
+      })
       .catch(error => {
         console.error('Error obteniendo votos:', error);
         res.status(500).json({ error: error.message });
@@ -109,6 +135,7 @@ app.get('/api/votos', (req, res) => {
     // SQLite
     db.all('SELECT * FROM votos ORDER BY datetime(fecha_voto) DESC', (err, rows) => {
       if (err) {
+        console.error('Error SQLite:', err);
         res.status(500).json({ error: err.message });
         return;
       }
@@ -151,28 +178,40 @@ app.get('/api/estadisticas', (req, res) => {
 });
 
 app.post('/api/votar', upload.single('foto'), (req, res) => {
+  console.log('POST /api/votar - Entorno:', process.env.NODE_ENV);
+  console.log('Body recibido:', req.body);
+  
   const { nombre, prediccion, pais, comentario } = req.body;
   const foto_url = req.file ? `/uploads/${req.file.filename}` : null;
 
   if (!nombre || !prediccion || !pais || !['varon', 'nina'].includes(prediccion)) {
+    console.error('Datos inválidos:', { nombre, prediccion, pais });
     return res.status(400).json({ error: 'Datos inválidos' });
   }
 
   if (process.env.NODE_ENV === 'production') {
     // PostgreSQL
+    if (!pool) {
+      console.error('Pool de PostgreSQL no está inicializado');
+      return res.status(500).json({ error: 'Base de datos no disponible' });
+    }
+    
+    console.log('Insertando voto en PostgreSQL:', { nombre, prediccion, pais, comentario, foto_url });
+    
     pool.query(`
       INSERT INTO votos (nombre, prediccion, pais, comentario, foto_url, fecha_voto)
       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
       RETURNING *
     `, [nombre, prediccion, pais, comentario, foto_url])
       .then(result => {
+        console.log('Voto insertado exitosamente:', result.rows[0]);
         res.json({
           ...result.rows[0],
           mensaje: 'Voto registrado exitosamente'
         });
       })
       .catch(error => {
-        console.error('Error insertando voto:', error);
+        console.error('Error insertando voto en PostgreSQL:', error);
         res.status(500).json({ error: error.message });
       });
   } else {
@@ -184,6 +223,7 @@ app.post('/api/votar', upload.single('foto'), (req, res) => {
 
     stmt.run([nombre, prediccion, pais, comentario, foto_url], function(err) {
       if (err) {
+        console.error('Error SQLite:', err);
         res.status(500).json({ error: err.message });
         return;
       }
