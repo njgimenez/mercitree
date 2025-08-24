@@ -1,7 +1,7 @@
 services:
   # Backend API
   - type: web
-    name: merci-backend
+    name: backby-tree
     env: node
     plan: free
     buildCommand: cd server && npm install
@@ -12,15 +12,15 @@ services:
       - key: PORT
         value: 10000
       - key: FRONTEND_URL
-        value: https://merci-frontend.onrender.com
+        value: https://arbol-de-prediccion.onrender.com
 
   # Frontend
   - type: web
-    name: merci-frontend
+    name: arbol-de-prediccion
     env: static
     plan: free
     buildCommand: cd client && npm install && npm run build
     staticPublishPath: ./client/build
     envVars:
       - key: REACT_APP_API_URL
-        value: https://merci-backend.onrender.com/api 
+        value: https://backby-tree.onrender.com/api 
