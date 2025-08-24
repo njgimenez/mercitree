@@ -161,6 +161,19 @@ if (process.env.NODE_ENV === 'production') {
         )
       `);
       console.log('✅ Tabla votos PostgreSQL creada o verificada correctamente');
+      
+      // Verificar si necesitamos modificar la columna foto_url para soportar imágenes base64
+      try {
+        const alterResult = await pool.query(`
+          ALTER TABLE votos 
+          ALTER COLUMN foto_url TYPE TEXT
+        `);
+        console.log('✅ Columna foto_url actualizada para soportar imágenes base64');
+      } catch (alterError) {
+        // Si ya es TEXT, no hay problema
+        console.log('ℹ️ Columna foto_url ya está configurada correctamente');
+      }
+      
     } catch (error) {
       console.error('❌ Error creando tabla PostgreSQL:', error);
       console.error('Detalles del error:', error.message);
