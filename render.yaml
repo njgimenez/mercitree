@@ -15,6 +15,7 @@ services:
         value: https://arbol-de-prediccion.onrender.com
       - key: DATABASE_URL
         value: postgresql://merci_user:Ad9VlhJJwXz8HkYq4BoLJPX7x2i3ARKy@dpg-d2lmr595pdvs73atvimg-a.oregon-postgres.render.com/merci_jz9e
+        # Configuración de base de datos PostgreSQL para producción
 
   # Frontend
   - type: web
