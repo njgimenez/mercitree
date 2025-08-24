@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 // Conectar a la base de datos
-const db = new sqlite3.Database('votos.db');
+const db = new sqlite3.Database('./server/votos.db');
 
 // Nombres de ejemplo para los votos
 const nombres = [

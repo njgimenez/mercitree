@@ -73,8 +73,8 @@ const VotoForm: React.FC<VotoFormProps> = ({ onSubmit }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!nombre.trim() || !prediccion) {
-      setError('Por favor completa todos los campos obligatorios');
+    if (!nombre.trim() || !prediccion || !pais || !comentario.trim() || !foto) {
+      setError('Todos los datos son importantes para dejar un buen recuerdo. Por favor completa todos los campos.');
       return;
     }
 
@@ -132,6 +132,43 @@ const VotoForm: React.FC<VotoFormProps> = ({ onSubmit }) => {
           {error}
         </motion.div>
       )}
+
+      <div className="form-group">
+        <label>Nombre y País *</label>
+        <div style={{ 
+          display: 'flex', 
+          gap: '15px', 
+          alignItems: 'flex-end',
+          flexDirection: window.innerWidth <= 768 ? 'column' : 'row'
+        }}>
+          <div style={{ flex: window.innerWidth <= 768 ? 'none' : 2, width: window.innerWidth <= 768 ? '100%' : 'auto' }}>
+            <input
+              type="text"
+              id="nombre"
+              className="input"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Escribe tu nombre completo"
+              required
+            />
+          </div>
+          <div style={{ flex: window.innerWidth <= 768 ? 'none' : 1, width: window.innerWidth <= 768 ? '100%' : 'auto' }}>
+            <select
+              id="pais"
+              className="input"
+              value={pais}
+              onChange={(e) => setPais(e.target.value)}
+              required
+            >
+              {paises.map((paisOption) => (
+                <option key={paisOption.codigo} value={paisOption.codigo}>
+                  {paisOption.bandera} {paisOption.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
 
       <div className="form-group">
         <label>Tu Predicción *</label>
@@ -223,41 +260,14 @@ const VotoForm: React.FC<VotoFormProps> = ({ onSubmit }) => {
       </div>
 
       <div className="form-group">
-        <label>Nombre y País *</label>
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end' }}>
-          <div style={{ flex: 2 }}>
-            <input
-              type="text"
-              id="nombre"
-              className="input"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Escribe tu nombre completo"
-              required
-            />
-          </div>
-          <div style={{ flex: 1 }}>
-            <select
-              id="pais"
-              className="input"
-              value={pais}
-              onChange={(e) => setPais(e.target.value)}
-              required
-            >
-              {paises.map((paisOption) => (
-                <option key={paisOption.codigo} value={paisOption.codigo}>
-                  {paisOption.bandera} {paisOption.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div className="form-group">
-        <label>Comentario y Foto (opcional)</label>
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
-          <div style={{ flex: 2 }}>
+        <label>Comentario y Foto *</label>
+        <div style={{ 
+          display: 'flex', 
+          gap: '15px', 
+          alignItems: 'flex-start',
+          flexDirection: window.innerWidth <= 768 ? 'column' : 'row'
+        }}>
+          <div style={{ flex: window.innerWidth <= 768 ? 'none' : 2, width: window.innerWidth <= 768 ? '100%' : 'auto' }}>
             <textarea
               id="comentario"
               className="textarea"
@@ -267,7 +277,7 @@ const VotoForm: React.FC<VotoFormProps> = ({ onSubmit }) => {
               style={{ minHeight: '120px' }}
             />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: window.innerWidth <= 768 ? 'none' : 1, width: window.innerWidth <= 768 ? '100%' : 'auto' }}>
             <div
               {...getRootProps()}
               className={`dropzone ${isDragActive ? 'dragover' : ''}`}
@@ -296,9 +306,9 @@ const VotoForm: React.FC<VotoFormProps> = ({ onSubmit }) => {
                     <p style={{ fontSize: '0.8rem', margin: '0' }}>Suelta aquí...</p>
                   ) : (
                     <div>
-                      <p style={{ fontSize: '0.8rem', margin: '0 0 4px 0' }}><strong>Foto</strong></p>
+                      <p style={{ fontSize: '0.8rem', margin: '0 0 4px 0' }}><strong>Foto *</strong></p>
                       <p style={{ fontSize: '0.7rem', color: '#666', margin: '0' }}>
-                        PNG, JPG, GIF
+                        PNG, JPG, GIF (obligatorio)
                       </p>
                     </div>
                   )}

@@ -56,9 +56,9 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ votos }) => {
   };
 
   // Variables globales del componente
-  const width = 1112;
-  const height = 625;
   const isMobile = window.innerWidth <= 768;
+  const width = isMobile ? window.innerWidth - 20 : 1112; // Ajustar al ancho de pantalla en móvil
+  const height = 625;
   const treeImage = new window.Image();
   treeImage.src = '/arbol.png';
 
@@ -70,10 +70,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ votos }) => {
     if (!ctx) return;
 
     // Configurar canvas
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    // const width = canvas.width; // Moved to global scope
-    // const height = canvas.height; // Moved to global scope
+    canvas.width = width;
+    canvas.height = height;
 
     // Limpiar canvas
     ctx.clearRect(0, 0, width, height);
@@ -100,18 +98,18 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ votos }) => {
     let nubesLoaded = 0;
     
     const drawClouds = () => {
-      // Nube izquierda - ampliada y manteniendo proporción original
-      const nube1Width = isMobile ? 140 : 300;
-      const nube1Height = isMobile ? 80 : 120; // Mantener proporción original
-      const nube1X = width * 0.03;
-      const nube1Y = height * 0.03;
+      // Nube izquierda - escalada y reposicionada
+      const nube1Width = isMobile ? width * 0.25 : 300; // 25% del ancho en móvil
+      const nube1Height = isMobile ? nube1Width * 0.6 : 120; // Mantener proporción
+      const nube1X = isMobile ? width * 0.05 : width * 0.03;
+      const nube1Y = isMobile ? height * 0.05 : height * 0.03;
       ctx.drawImage(nube1Image, nube1X, nube1Y, nube1Width, nube1Height);
       
-      // Nube derecha - ampliada y manteniendo proporción original
-      const nube2Width = isMobile ? 120 : 300;
-      const nube2Height = isMobile ? 70 : 120; // Mantener proporción original
-      const nube2X = width * 0.70;
-      const nube2Y = height * 0.10;
+      // Nube derecha - escalada y reposicionada
+      const nube2Width = isMobile ? width * 0.22 : 300; // 22% del ancho en móvil
+      const nube2Height = isMobile ? nube2Width * 0.6 : 120; // Mantener proporción
+      const nube2X = isMobile ? width * 0.73 : width * 0.70; // Más a la derecha en móvil
+      const nube2Y = isMobile ? height * 0.08 : height * 0.10;
       ctx.drawImage(nube2Image, nube2X, nube2Y, nube2Width, nube2Height);
     };
     
@@ -140,9 +138,12 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ votos }) => {
 
     // Cargar y dibujar la imagen del árbol
     treeImage.onload = () => {
+      console.log('Árbol cargado, dibujando en:', { width, height, isMobile });
       // Centrar el árbol horizontalmente
-      const treeX = (width / 2) - (298 / 2);
-      ctx.drawImage(treeImage, treeX, height*0.25, 298, 468);
+      const treeX = isMobile ? (width / 2) - (298 / 2) : (width / 2) - (298 / 2) - (width * 0.07);
+      const treeY = isMobile ? height * 0.15 : height * 0.25; // Más arriba en móvil
+      console.log('Posición del árbol:', { treeX, treeY });
+      ctx.drawImage(treeImage, treeX, treeY, 298, 468);
       // Después de dibujar el árbol, dibujar las hojas
       drawLeavesAfterTree();
     };
@@ -150,9 +151,11 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ votos }) => {
     // Función para dibujar las hojas después de que se carga el árbol
     const drawLeavesAfterTree = () => {
       const total = votos.length;
-      const centerX = width / 1.95; // CENTRO HORIZONTAL
-      const centerY = isMobile ? height * 0.43 : height * 0.43;
+      console.log('Dibujando hojas:', { total, width, height, isMobile });
+      const centerX = isMobile ? (width / 2) : (width / 2) - (width * 0.07); // Centrado en móvil
+      const centerY = isMobile ? height * 0.28 : height * 0.43; // Centrado vertical en móvil
       const baseRadius = (isMobile ? 90 : 170) * 1.60;
+      console.log('Centro de hojas:', { centerX, centerY, baseRadius });
 
       votos.forEach((voto, index) => {
         // Espiral de Fibonacci con variación determinística
@@ -258,9 +261,11 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ votos }) => {
   }, [votos]);
 
   return (
-    <div style={{ width: '100%', height: '625px', border: '2px solid #ddd', borderRadius: '10px', overflow: 'hidden', position: 'relative', background: 'transparent' }}>
+    <div style={{ width: '100%', height: '625px', border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden', position: 'relative', background: 'transparent' }}>
       <canvas
         ref={canvasRef}
+        width={width}
+        height={height}
         style={{ width: '100%', height: '100%', display: 'block', background: 'transparent' }}
       />
       {/* Leyenda y contador fuera del canvas, como antes */}

@@ -23,7 +23,6 @@ server/.cache/
 
 # Archivos de base de datos y subidas
 server/uploads/
-server/votos.db
 
 # Otros
 .idea/

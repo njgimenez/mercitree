@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 
 // Conectar a la base de datos
-const db = new sqlite3.Database('votos.db');
+const db = new sqlite3.Database('./server/votos.db');
 
 console.log('🗑️ Limpiando todos los datos de la base de datos...');
 

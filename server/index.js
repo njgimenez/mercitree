@@ -51,37 +51,14 @@ db.serialize(() => {
     pais TEXT,
     comentario TEXT,
     foto_url TEXT,
-    fecha_voto DATETIME DEFAULT CURRENT_TIMESTAMP,
-    leaf_x REAL,
-    leaf_y REAL,
-    leaf_size REAL,
-    leaf_angle REAL
+    fecha_voto DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
   
   // Agregar columnas de posición si no existen (para bases de datos existentes)
-  db.run(`ALTER TABLE votos ADD COLUMN leaf_x REAL`, (err) => {
-    if (err && !err.message.includes('duplicate column')) {
-      console.log('Error agregando leaf_x:', err.message);
-    }
-  });
-  
-  db.run(`ALTER TABLE votos ADD COLUMN leaf_y REAL`, (err) => {
-    if (err && !err.message.includes('duplicate column')) {
-      console.log('Error agregando leaf_y:', err.message);
-    }
-  });
-  
-  db.run(`ALTER TABLE votos ADD COLUMN leaf_size REAL`, (err) => {
-    if (err && !err.message.includes('duplicate column')) {
-      console.log('Error agregando leaf_size:', err.message);
-    }
-  });
-  
-  db.run(`ALTER TABLE votos ADD COLUMN leaf_angle REAL`, (err) => {
-    if (err && !err.message.includes('duplicate column')) {
-      console.log('Error agregando leaf_angle:', err.message);
-    }
-  });
+  // Ya no se necesitan las columnas leaf_x, leaf_y, leaf_size, leaf_angle
+  // Ya no se necesitan las columnas leaf_x, leaf_y, leaf_size, leaf_angle
+  // Ya no se necesitan las columnas leaf_x, leaf_y, leaf_size, leaf_angle
+  // Ya no se necesitan las columnas leaf_x, leaf_y, leaf_size, leaf_angle
 });
 
 // Rutas API

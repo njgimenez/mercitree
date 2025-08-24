@@ -94,14 +94,13 @@ function App() {
             transition={{ delay: 0.2, duration: 0.5 }}
             style={{ 
               textAlign: 'center', 
-              fontSize: '2.5rem', 
+              fontSize: window.innerWidth <= 768 ? '1.2rem' : '2.5rem', 
               marginBottom: '10px',
-              color: '#333'
+              color: '#333',
+              lineHeight: '1.2'
             }}
-          >
-            🌳 Árbol de Predicciones 🌳
-          </motion.h1>
-          <p style={{ textAlign: 'center', fontSize: '1.2rem', color: '#666', marginBottom: '30px' }}>
+          >🌳 Árbol de Predicciones 🌳 </motion.h1>
+          <p style={{ textAlign: 'center', fontSize: '1rem', color: '#666', marginBottom: '30px' }}>
             ¡Vota y ve cómo crece nuestro árbol con tus predicciones!
           </p>
         </div>
