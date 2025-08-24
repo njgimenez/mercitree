@@ -63,11 +63,11 @@ const VotosList: React.FC<VotosListProps> = ({ votos, onImageClick }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             {voto.foto_url && (
               <img
-                src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://192.168.18.49:5000'}${voto.foto_url}`}
+                src={voto.foto_url.startsWith('data:') ? voto.foto_url : `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://192.168.18.49:5000'}${voto.foto_url}`}
                 alt={`Foto de ${voto.nombre}`}
                 className="voto-foto"
                 style={{ cursor: 'pointer' }}
-                onClick={() => onImageClick(`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://192.168.18.49:5000'}${voto.foto_url}`)}
+                onClick={() => onImageClick(voto.foto_url!.startsWith('data:') ? voto.foto_url! : `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://192.168.18.49:5000'}${voto.foto_url}`)}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';

@@ -3,6 +3,7 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { Buffer } = require('buffer');
 
 // Importar base de datos según el entorno
 let db, pool;
@@ -46,32 +47,98 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 app.use('/images', express.static(__dirname));
 
-// Configuración de multer para subida de archivos
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = 'uploads';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+// Ruta para servir imágenes base64 en producción
+if (process.env.NODE_ENV === 'production') {
+  app.get('/api/image/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      if (!pool) {
+        return res.status(500).json({ error: 'Base de datos no disponible' });
+      }
+      
+      const result = await pool.query('SELECT foto_url FROM votos WHERE id = $1', [id]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Imagen no encontrada' });
+      }
+      
+      const fotoUrl = result.rows[0].foto_url;
+      
+      if (!fotoUrl || !fotoUrl.startsWith('data:image/')) {
+        return res.status(404).json({ error: 'Imagen no encontrada' });
+      }
+      
+      // Extraer el tipo MIME y los datos base64
+      const matches = fotoUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (!matches) {
+        return res.status(400).json({ error: 'Formato de imagen inválido' });
+      }
+      
+      const mimeType = matches[1];
+      const base64Data = matches[2];
+      
+      // Convertir base64 a buffer
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      
+      // Enviar la imagen
+      res.set('Content-Type', mimeType);
+      res.set('Cache-Control', 'public, max-age=31536000'); // Cache por 1 año
+      res.send(imageBuffer);
+      
+    } catch (error) {
+      console.error('Error sirviendo imagen:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+  });
+}
 
-const upload = multer({ 
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Solo se permiten imágenes'), false);
+// Configuración de multer para subida de archivos
+let storage;
+let upload;
+
+if (process.env.NODE_ENV === 'production') {
+  // En producción, usar memoria para convertir a base64
+  storage = multer.memoryStorage();
+  upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Solo se permiten imágenes'), false);
+      }
     }
-  }
-});
+  });
+} else {
+  // En desarrollo, usar disco
+  storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadDir = 'uploads';
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+  
+  upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Solo se permiten imágenes'), false);
+      }
+    }
+  });
+}
 
 // Inicializar base de datos según el entorno
 if (process.env.NODE_ENV === 'production') {
@@ -198,7 +265,22 @@ app.post('/api/votar', upload.single('foto'), (req, res) => {
   console.log('Body recibido:', req.body);
   
   const { nombre, prediccion, pais, comentario } = req.body;
-  const foto_url = req.file ? `/uploads/${req.file.filename}` : null;
+  
+  // Manejar la foto según el entorno
+  let foto_url = null;
+  
+  if (req.file) {
+    if (process.env.NODE_ENV === 'production') {
+      // En producción, convertir a base64
+      const mimeType = req.file.mimetype;
+      const base64Data = req.file.buffer.toString('base64');
+      foto_url = `data:${mimeType};base64,${base64Data}`;
+      console.log('Foto convertida a base64, tamaño:', base64Data.length);
+    } else {
+      // En desarrollo, usar ruta de archivo
+      foto_url = `/uploads/${req.file.filename}`;
+    }
+  }
 
   if (!nombre || !prediccion || !pais || !['varon', 'nina'].includes(prediccion)) {
     console.error('Datos inválidos:', { nombre, prediccion, pais });
@@ -212,7 +294,7 @@ app.post('/api/votar', upload.single('foto'), (req, res) => {
       return res.status(500).json({ error: 'Base de datos no disponible' });
     }
     
-    console.log('Insertando voto en PostgreSQL:', { nombre, prediccion, pais, comentario, foto_url });
+    console.log('Insertando voto en PostgreSQL:', { nombre, prediccion, pais, comentario, foto_url: foto_url ? 'base64' : null });
     
     pool.query(`
       INSERT INTO votos (nombre, prediccion, pais, comentario, foto_url, fecha_voto)
