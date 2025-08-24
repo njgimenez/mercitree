@@ -119,7 +119,7 @@ app.get('/api/votos', (req, res) => {
     // PostgreSQL
     if (!pool) {
       console.error('Pool de PostgreSQL no está inicializado');
-      return res.status(500).json({ error: 'Base de datos no disponible' });
+      return res.status(500).json({ error: 'Base de datos no disponible - Pool no inicializado' });
     }
     
     pool.query('SELECT * FROM votos ORDER BY fecha_voto DESC')
@@ -129,7 +129,7 @@ app.get('/api/votos', (req, res) => {
       })
       .catch(error => {
         console.error('Error obteniendo votos:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: `Error de base de datos: ${error.message}` });
       });
   } else {
     // SQLite
@@ -248,11 +248,27 @@ if (process.env.NODE_ENV === 'production') {
   app.get('/', (req, res) => {
     res.json({
       message: 'API de Árbol de Predicciones funcionando correctamente',
+      environment: process.env.NODE_ENV,
+      database: process.env.DATABASE_URL ? 'Configurada' : 'NO CONFIGURADA',
+      pool: pool ? 'Inicializado' : 'NO INICIALIZADO',
       endpoints: {
         votos: '/api/votos',
         estadisticas: '/api/estadisticas',
-        votar: '/api/votar'
+        votar: '/api/votar',
+        test: '/api/test'
       }
+    });
+  });
+  
+  // Ruta de prueba para verificar el servidor
+  app.get('/api/test', (req, res) => {
+    res.json({
+      status: 'OK',
+      message: 'Servidor funcionando correctamente',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      database: process.env.DATABASE_URL ? 'Configurada' : 'NO CONFIGURADA',
+      pool: pool ? 'Inicializado' : 'NO INICIALIZADO'
     });
   });
 }
