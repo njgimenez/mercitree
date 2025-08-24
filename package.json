@@ -1,0 +1,27 @@
+{
+  "name": "revelacion-sexo",
+  "version": "1.0.0",
+  "description": "Página web para revelación de sexo con árbol interactivo",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install"
+  },
+  "keywords": [
+    "revelacion",
+    "sexo",
+    "arbol",
+    "votacion"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@react-pdf/renderer": "^4.3.0"
+  }
+}
