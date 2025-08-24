@@ -296,7 +296,8 @@ if (process.env.NODE_ENV === 'production') {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
-      database: process.env.DATABASE_URL ? 'Configurada' : 'NO CONFIGURADA'
+      database: process.env.DATABASE_URL ? 'Configurada' : 'NO CONFIGURADA',
+      version: '1.0.1'
     });
   });
 
