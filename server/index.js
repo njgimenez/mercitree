@@ -11,7 +11,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // Middleware
 app.use(cors({
-  origin: isProduction ? ['https://merci-frontend.onrender.com'] : ['http://localhost:3000', 'http://192.168.18.49:3000'],
+  origin: isProduction ? [process.env.FRONTEND_URL || 'https://merci-frontend.onrender.com'] : ['http://localhost:3000', 'http://192.168.18.49:3000'],
   credentials: true
 }));
 app.use(express.json());
