@@ -273,6 +273,54 @@ app.get('/api/estadisticas', (req, res) => {
   }
 });
 
+// Ruta para eliminar votos (temporal para limpieza)
+app.delete('/api/votos/:id', (req, res) => {
+  const { id } = req.params;
+  console.log(`DELETE /api/votos/${id} - Entorno:`, process.env.NODE_ENV);
+
+  if (process.env.NODE_ENV === 'production') {
+    // PostgreSQL
+    if (!pool) {
+      console.error('Pool de PostgreSQL no está inicializado');
+      return res.status(500).json({ error: 'Base de datos no disponible' });
+    }
+    
+    pool.query('DELETE FROM votos WHERE id = $1 RETURNING *', [id])
+      .then(result => {
+        if (result.rows.length === 0) {
+          return res.status(404).json({ error: 'Voto no encontrado' });
+        }
+        console.log('Voto eliminado exitosamente:', result.rows[0]);
+        res.json({ 
+          mensaje: 'Voto eliminado exitosamente',
+          voto: result.rows[0]
+        });
+      })
+      .catch(error => {
+        console.error('Error eliminando voto en PostgreSQL:', error);
+        res.status(500).json({ error: error.message });
+      });
+  } else {
+    // SQLite
+    db.run('DELETE FROM votos WHERE id = ?', [id], function(err) {
+      if (err) {
+        console.error('Error SQLite:', err);
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Voto no encontrado' });
+      }
+      
+      res.json({ 
+        mensaje: 'Voto eliminado exitosamente',
+        cambios: this.changes
+      });
+    });
+  }
+});
+
 app.post('/api/votar', upload.single('foto'), (req, res) => {
   console.log('POST /api/votar - Entorno:', process.env.NODE_ENV);
   console.log('Body recibido:', req.body);
