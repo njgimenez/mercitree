@@ -7,14 +7,30 @@ const fs = require('fs');
 // Importar base de datos según el entorno
 let db, pool;
 if (process.env.NODE_ENV === 'production') {
-  const { Pool: PgPool } = require('pg');
-  pool = new PgPool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
+  try {
+    const { Pool: PgPool } = require('pg');
+    console.log('🔧 Configurando PostgreSQL para producción...');
+    console.log('📊 DATABASE_URL configurada:', process.env.DATABASE_URL ? 'SÍ' : 'NO');
+    
+    pool = new PgPool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+    
+    console.log('✅ Pool de PostgreSQL creado exitosamente');
+  } catch (error) {
+    console.error('❌ Error configurando PostgreSQL:', error);
+    pool = null;
+  }
 } else {
-  const sqlite3 = require('sqlite3').verbose();
-  db = new sqlite3.Database('votos.db');
+  try {
+    const sqlite3 = require('sqlite3').verbose();
+    db = new sqlite3.Database('votos.db');
+    console.log('✅ SQLite configurado para desarrollo');
+  } catch (error) {
+    console.error('❌ Error configurando SQLite:', error);
+    db = null;
+  }
 }
 
 const app = express();
@@ -268,13 +284,36 @@ if (process.env.NODE_ENV === 'production') {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
       database: process.env.DATABASE_URL ? 'Configurada' : 'NO CONFIGURADA',
-      pool: pool ? 'Inicializado' : 'NO INICIALIZADO'
+      pool: pool ? 'Inicializado' : 'NO INICIALIZADO',
+      port: process.env.PORT || 5000,
+      node_version: process.version
+    });
+  });
+  
+  // Ruta de health check para Render
+  app.get('/health', (req, res) => {
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      database: process.env.DATABASE_URL ? 'Configurada' : 'NO CONFIGURADA'
     });
   });
 }
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
-  console.log(`API disponible en http://localhost:${PORT}/api`);
-  console.log(`API disponible en http://192.168.18.49:${PORT}/api`);
+  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  console.log(`🌐 API disponible en http://localhost:${PORT}/api`);
+  console.log(`🌐 API disponible en http://192.168.18.49:${PORT}/api`);
+  console.log(`🔧 Entorno: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📊 Base de datos: ${process.env.NODE_ENV === 'production' ? 'PostgreSQL' : 'SQLite'}`);
+});
+
+// Manejo de errores no capturados
+process.on('uncaughtException', (error) => {
+  console.error('❌ Error no capturado:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Promesa rechazada no manejada:', reason);
 }); 
