@@ -24,17 +24,16 @@ const getBandera = (codigoPais: string) => {
 
 interface VotosListProps {
   votos: Voto[];
+  onImageClick: (imageUrl: string) => void;
 }
 
-const VotosList: React.FC<VotosListProps> = ({ votos }) => {
+const VotosList: React.FC<VotosListProps> = ({ votos, onImageClick }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
   };
 
@@ -64,9 +63,11 @@ const VotosList: React.FC<VotosListProps> = ({ votos }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             {voto.foto_url && (
               <img
-                src={`http://192.168.18.49:5000${voto.foto_url}`}
+                src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://192.168.18.49:5000'}${voto.foto_url}`}
                 alt={`Foto de ${voto.nombre}`}
                 className="voto-foto"
+                style={{ cursor: 'pointer' }}
+                onClick={() => onImageClick(`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://192.168.18.49:5000'}${voto.foto_url}`)}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';

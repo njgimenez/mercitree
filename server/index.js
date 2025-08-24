@@ -7,11 +7,16 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: isProduction ? ['https://merci-frontend.onrender.com'] : ['http://localhost:3000', 'http://192.168.18.49:3000'],
+  credentials: true
+}));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
+app.use('/images', express.static(__dirname));
 
 // Configuración de multer para subida de archivos
 const storage = multer.diskStorage({
@@ -63,7 +68,7 @@ db.serialize(() => {
 
 // Rutas API
 app.get('/api/votos', (req, res) => {
-  db.all('SELECT * FROM votos ORDER BY fecha_voto DESC', (err, rows) => {
+  db.all('SELECT * FROM votos ORDER BY datetime(fecha_voto) DESC', (err, rows) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
@@ -97,8 +102,8 @@ app.post('/api/votar', upload.single('foto'), (req, res) => {
   }
 
     const stmt = db.prepare(`
-    INSERT INTO votos (nombre, prediccion, pais, comentario, foto_url)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO votos (nombre, prediccion, pais, comentario, foto_url, fecha_voto)
+    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
   `);
 
   stmt.run([nombre, prediccion, pais, comentario, foto_url], function(err) {

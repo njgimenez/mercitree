@@ -91,7 +91,7 @@ const VotoForm: React.FC<VotoFormProps> = ({ onSubmit }) => {
         formData.append('foto', foto);
       }
 
-      const response = await axios.post('http://192.168.18.49:5000/api/votar', formData, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://192.168.18.49:5000/api'}/votar`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

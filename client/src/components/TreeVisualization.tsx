@@ -133,8 +133,9 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ votos }) => {
       nubesLoaded++;
     };
     
-    nube1Image.src = '/nube1.png';
-    nube2Image.src = '/nube2.png';
+      const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://192.168.18.49:5000';
+  nube1Image.src = `${baseUrl}/images/nube1.png`;
+  nube2Image.src = `${baseUrl}/images/nube2.png`;
 
     // Cargar y dibujar la imagen del árbol
     treeImage.onload = () => {
@@ -144,6 +145,7 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ votos }) => {
       const treeY = isMobile ? height * 0.15 : height * 0.25; // Más arriba en móvil
       console.log('Posición del árbol:', { treeX, treeY });
       ctx.drawImage(treeImage, treeX, treeY, 298, 468);
+      console.log('Árbol dibujado, ahora dibujando hojas...');
       // Después de dibujar el árbol, dibujar las hojas
       drawLeavesAfterTree();
     };
@@ -153,8 +155,8 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ votos }) => {
       const total = votos.length;
       console.log('Dibujando hojas:', { total, width, height, isMobile });
       const centerX = isMobile ? (width / 2) : (width / 2) - (width * 0.07); // Centrado en móvil
-      const centerY = isMobile ? height * 0.28 : height * 0.43; // Centrado vertical en móvil
-      const baseRadius = (isMobile ? 90 : 170) * 1.60;
+      const centerY = isMobile ? height * 0.38 : height * 0.43; // Subido 5% en móvil (de 0.43 a 0.38)
+      const baseRadius = (isMobile ? 90 * 1.20 : 170) * 1.60; // Dispersión 20% más en móvil
       console.log('Centro de hojas:', { centerX, centerY, baseRadius });
 
       votos.forEach((voto, index) => {
@@ -184,12 +186,13 @@ const TreeVisualization: React.FC<TreeVisualizationProps> = ({ votos }) => {
     
     // Intentar cargar la imagen del árbol, si no existe usar el árbol dibujado
     treeImage.onerror = () => {
+      console.log('Error cargando arbol.png, usando árbol dibujado');
       // Si no se puede cargar la imagen, dibujar el árbol original
       drawOriginalTree();
       drawLeavesAfterTree();
     };
     
-    // treeImage.src = '/arbol.png'; // Moved to global scope
+    treeImage.src = `${baseUrl}/images/arbol.png`;
     
     // Función para dibujar el árbol original si no hay imagen
     const drawOriginalTree = () => {

@@ -27,7 +27,7 @@ interface Estadisticas {
   votos_nina: number;
 }
 
-const API_BASE_URL = 'http://192.168.18.49:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.18.49:5000/api';
 
 function App() {
   const [votos, setVotos] = useState<Voto[]>([]);
@@ -37,6 +37,15 @@ function App() {
     votos_nina: 0
   });
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+  };
+
+  const closeImageModal = () => {
+    setSelectedImage(null);
+  };
 
   const fetchVotos = async () => {
     try {
@@ -143,10 +152,88 @@ function App() {
       >
         <div className="card">
           <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>👥 Todas las Predicciones</h2>
-          <VotosList votos={votos} />
+          <VotosList votos={votos} onImageClick={handleImageClick} />
         </div>
       </motion.div>
 
+      {/* Modal global para mostrar imagen ampliada */}
+      {selectedImage && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            cursor: 'pointer',
+            backdropFilter: 'blur(5px)',
+            pointerEvents: 'auto'
+          }}
+          onClick={closeImageModal}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedImage}
+              alt="Foto ampliada"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                borderRadius: '12px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+                border: '2px solid rgba(255, 255, 255, 0.1)',
+                display: 'block'
+              }}
+            />
+            {/* Botón de cerrar */}
+            <button
+              onClick={closeImageModal}
+              style={{
+                position: 'absolute',
+                top: '-50px',
+                right: '0px',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                color: 'white',
+                fontSize: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backdropFilter: 'blur(10px)',
+                zIndex: 10000
+              }}
+            >
+              ✕
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
 
     </div>
   );
